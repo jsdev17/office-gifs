@@ -99,7 +99,7 @@
       // if text is formatted for search, assign. if not, format it before assigning.
       var searchFor = text.includes('+') ? text : text.toLowerCase().replace(' ', '+');
       var limit = plusOne ? plusOne : '30';
-      var GIPHYEndpoint = `http://api.giphy.com/v1/gifs/search?q=${searchFor}&api_key=${API_KEY}&limit=${limit}`;
+      var GIPHYEndpoint = `https://api.giphy.com/v1/gifs/search?q=${searchFor}&api_key=${API_KEY}&limit=${limit}`;
       axios.get(GIPHYEndpoint)
       .then((response) => {
         // grab necessary information and return new array of objects
