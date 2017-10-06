@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>The Office Gifs</title>
+  <link rel="stylesheet"
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+    integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M"
+    crossorigin="anonymous">
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    .animated-gif {
+      margin: 10px;
+    }
+    .btn {
+      margin: 5px;
+      font-family: monospace;
+      font-size: 15px;
+    }
+    .jumbotron {
+      text-align: center;
+      font-family: monospace;
+      background-color: black;
+      color: white;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px;
+    }
+    .hide {
+      visibility: hidden;
+    }
+
+    /*@media (min-width: 374px) {
+
+     }*/
+  </style>
+</head>
+<body class='bg-light'>
+  <div class="container">
+      <div class="jumbotron jumbotron-fluid">
+          <div class="container">
+            <h1 class="display-3">The Office GIFs</h1>
+          </div>
+        </div>
+      <div class="row">
+        <div class="col-md-10">
+            <div id="hashes"></div>
+        </div>
+        <div class="col-md-2">
+          <button type="button" id='addOne' class="btn btn-outline-dark hide" onclick='addOneMore()'>
+            Add one more
+          </button>
+        </div>
+      </div>
+      <div class="row">
+          <div class="col-md-12">
+              <div id="results"></div>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    /* NOTES
+     - next feature would be: whenever a gif is clicked or tapped on (attack event handlers),
+     - a modal pops up with an enlarged version, and URL is made available to copy
+     *** Could use slug for GIF title in modal.
+    */
+    var hashes = [
+      'The Office', 'Michael Scott', 'Jim Halpert', 'Pam Beesly', 'Dwight Schrute',
+      'Angela Martin', 'Kevin Malone', 'Oscar Martinez', 'Meredith Palmer', 'Creed Bratton',
+      'Stanley Hudson', 'Phyllis Vance', 'Toby Flenderson', 'Ryan Howard', 'Kelly Kapoor'
+    ];
+    var gifsData = []; // does this need to be global...?
+    var buttons = document.querySelector('#hashes');
+    var results = document.querySelector('#results');
+    var addingMore = false;
+    // Call to this function initializes everything
+    renderHashes(hashes);
+
+    /* ======== FUNCTIONS ======== */
+
+    function renderHashes(array) {
+      array.forEach((text) => {
+        let hash = document.createElement('button');
+        hash.setAttribute('type', 'button');
+        hash.classList.add('btn', 'btn-primary');
+        hash.innerText = text;
+        hash.addEventListener('click', () =>  renderGifs(hash.innerText) );
+        buttons.appendChild(hash);
+      });
+    }
+
+    // [plusOne] parameter is optional
+    function renderGifs(text, plusOne) {
+      var API_KEY = 'yqTHgCxFj0wiCR2E2dpO8iipyHUG1XzF';
+      // if text is formatted for search, assign. if not, format it before assigning.
+      var searchFor = text.includes('+') ? text : text.toLowerCase().replace(' ', '+');
+      var limit = plusOne ? plusOne : '30';
+      var GIPHYEndpoint = `http://api.giphy.com/v1/gifs/search?q=${searchFor}&api_key=${API_KEY}&limit=${limit}`;
+      axios.get(GIPHYEndpoint)
+      .then((response) => {
+        // grab necessary information and return new array of objects
+        gifsData = response.data.data.map((gif) => {
+          return (
+            {
+              url: gif.images.fixed_width.url,
+              rating: gif.rating
+              slug: gif.slug
+            }
+          )
+        }) // end of .map()
+
+        // empty #results ONLY if re-rendering whole section.
+        // however, if just adding one more, reduce the array to the newest gif.
+        // array is reduced to avoid duplicates. GIPHY API doesn't randomize GIFS on every call.
+        addingMore ? gifsData = gifsData.slice(gifsData.length - 1) : results.innerHTML = '';
+
+        // render GIFS with data from gifsData array
+        gifsData.forEach((gif) => {
+          let img = document.createElement('img');
+          img.setAttribute('src', gif.url);
+          img.setAttribute('rating', gif.rating);
+          img.setAttribute('slug', gif.slug);
+          img.setAttribute('search-tag', searchFor);
+          img.classList.add('animated-gif');
+          // if we're adding more...
+          addingMore ? (
+            // prepend
+            results.insertBefore(img, results.childNodes[0]),
+            addingMore = false
+          ) : (
+            // otherwise, empty (already done if condition met above)
+            // and repopulate
+            results.appendChild(img),
+            document.querySelector('#addOne').classList.remove('hide')
+          );
+        })
+      }) // .then()
+    }
+
+    function addOneMore() {
+      // set flag to true so that gifs prepend when calling renderGifs()
+      addingMore = true;
+      // grabs search term/criteria from first GIF in #results
+      let searchTag = document.querySelector('.animated-gif').getAttribute('search-tag');
+      // plus one so that we always get a new GIF when hitting the API.
+      renderGifs(searchTag, results.childElementCount + 1);
+    }
+  </script>
+</body>
+</html>
